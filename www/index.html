@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AliadoApp - Tu Aliado en las Urgencias</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Firebase SDK versión compatible -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤝 AliadoApp</h1>
+            <p class="slogan">🚀 <strong>Tu aliado en las urgencias</strong> 🚀</p>
+            <p class="sub-slogan">Conectamos <strong>personas que necesitan ayuda</strong> con <strong>quienes pueden brindarla</strong></p>
+        </header>
+
+        <!-- Búsqueda -->
+        <div class="search-section">
+            <h3>🔍 ¿Qué necesitas solucionar?</h3>
+            <p class="search-subtitle">Encuentra aliados en tu departamento y zona</p>
+            
+            <input type="text" id="searchInput" placeholder="Ej: pintura, plomería, limpieza, electricidad...">
+            
+            <select id="departamentoInput">
+                <option value="">Toda Bolivia</option>
+                <option value="la paz">La Paz</option>
+                <option value="el alto">El Alto</option>
+                <option value="cochabamba">Cochabamba</option>
+		<option value="santa cruz">Santa Cruz</option>
+                <option value="oruro">Oruro</option>
+                <option value="potosi">Potosí</option>
+                <option value="chuquisaca">Chuquisaca</option>
+                <option value="tarija">Tarija</option>
+                <option value="beni">Beni</option>
+                <option value="pando">Pando</option>
+            </select>
+            
+            <input type="text" id="locationInput" placeholder="Zona (Norte, Sur, Centro, etc.)" list="zonasGenericas">
+            <datalist id="zonasGenericas">
+                <option value="Norte">
+                <option value="Sur">
+                <option value="Este">
+                <option value="Oeste">
+                <option value="Centro">
+                <option value="Centro Norte">
+                <option value="Centro Sur">
+                <option value="Zona Industrial">
+                <option value="Zona Residencial">
+                <option value="Area Urbana">
+                <option value="Area Rural">
+                <option value="Aeropuerto">
+            </datalist>
+            
+            <button onclick="buscarTrabajadores()">📞 Buscar Aliados</button>
+        </div>
+
+        <!-- Registro trabajador -->
+        <div class="register-section">
+            <h3>💪 ¿Tienes ganas de trabajar y ayudar a las personas?</h3>
+            <p class="register-subtitle">Regístrate indicando tu departamento y zona de trabajo</p>
+            
+            <input type="text" id="regNombre" placeholder="Tu nombre completo" required>
+            
+            <select id="regTipo" required onchange="mostrarCampoOtros()">
+                <option value="">¿Qué sabes hacer?</option>
+                <option value="pintor">Pintura</option>
+                <option value="albanil">Albañilería/Construcción</option>
+                <option value="limpieza">Limpieza</option>
+                <option value="electricista">Electricidad</option>
+                <option value="plomero">Plomería</option>
+                <option value="ayudante">Ayudante General</option>
+                <option value="jardinero">Jardinería</option>
+                <option value="carpintero">Carpintería</option>
+                <option value="celular">Celulares</option>
+                <option value="cerrajero">Cerrajería</option>
+                <option value="cociner">Cocina</option>
+                <option value="mecanico">Mecánica</option>
+                <option value="soldador">Soldadura</option>
+                <option value="vendedor">Ventas</option>
+                <option value="mudanzas">Mudanzas</option>
+                <option value="estetica">Belleza</option>
+                <option value="otros">Otros (especificar)</option>
+            </select>
+
+            <!-- CAMPO NUEVO PARA HABILIDADES PERSONALIZADAS -->
+            <div id="campoOtrosContainer" style="display: none;">
+                <input type="text" id="regOtrosEspecifico" placeholder="Describe tu habilidad o servicio (ej: reparar computadoras, clases de música, etc.)" style="width: 100%;">
+            </div>
+
+            <select id="regDepartamento" required>
+                <option value="">¿Dónde trabajas?</option>
+                <option value="la paz">La Paz</option>
+                <option value="el alto">El Alto</option>
+		<option value="cochabamba">Cochabamba</option>
+                <option value="santa cruz">Santa Cruz</option>
+                <option value="oruro">Oruro</option>
+                <option value="potosi">Potosí</option>
+                <option value="chuquisaca">Chuquisaca</option>
+                <option value="tarija">Tarija</option>
+                <option value="beni">Beni</option>
+                <option value="pando">Pando</option>
+            </select>
+
+            <input type="text" id="regUbicacion" placeholder="Tu zona en la ciudad (Norte, Sur, Centro, etc.)" list="zonasGenericas" required>
+            
+            <input type="tel" id="regTelefono" placeholder="Tu teléfono (ej: +591 71234567)" required>
+            
+            <button onclick="registrarTrabajador()">🤝 ¡Quiero Ayudar y Trabajar!</button>
+        </div>
+
+        <!-- Resultados -->
+        <div class="results-section" id="resultsSection">
+            <h3>💼 Aliados Encontrados</h3>
+            
+            <!-- AVISO LEGAL COMPLETO -->
+            <div class="legal-notice">
+                <p><strong>📝 Aviso Importante:</strong> AliadoApp es una <strong>aplicación gratuita</strong> que conecta personas. Por favor, ten en cuenta que:</p>
+                
+                <div class="legal-points">
+                    <p>🔹 <strong>No intervenimos</strong> en acuerdos, pagos o negociaciones entre las partes</p>
+                    <p>🔹 <strong>No verificamos</strong> habilidades profesionales, antecedentes o referencias</p>
+                    <p>🔹 <strong>No nos hacemos responsables</strong> por:</p>
+                    <ul>
+                        <li>Calidad del trabajo realizado</li>
+                        <li>Incumplimiento de pagos (tanto del que contrata como del que ofrece)</li>
+                        <li>Promesas de pago no cumplidas</li>
+                        <li>Problemas económicos de cualquiera de las partes</li>
+                        <li>Daños a propiedad durante el servicio</li>
+                        <li>Conflictos o desacuerdos entre usuarios</li>
+                    </ul>
+                    <p>🔹 <strong>Recomendamos:</strong> Verificar identificación, solicitar referencias, acordar términos por escrito y supervisar el trabajo.</p>
+                </div>
+                
+                <p style="margin-top: 10px; font-size: 0.8em; font-style: italic;">Al usar AliadoApp, aceptas que eres responsable de tus propias decisiones y acuerdos.</p>
+            </div>
+            
+            <div id="resultsList">
+                <div class="welcome-message">
+                    <p>🎯 <strong>Encuentra personas confiables para tu proyecto</strong></p>
+                    <p>Conecta directamente con aliados verificados por la comunidad</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="stats-section">
+            <div class="stat-card">
+                <h4>📊 Total de Aliados</h4>
+                <span id="totalTrabajadores">0</span>
+            </div>
+            <div class="stat-card">
+                <h4>⭐ Mejor Calificados</h4>
+                <span id="topRated">0</span>
+            </div>
+            <div class="stat-card">
+                <h4>✅ Trabajos Realizados</h4>
+                <span id="totalTrabajos">0</span>
+            </div>
+        </div>
+
+        <!-- Mensajes -->
+        <div id="message" class="message"></div>
+
+        <!-- FOOTER PARA PLAY STORE -->
+        <footer style="text-align: center; margin-top: 40px; padding: 25px 20px; border-top: 2px solid #e9ecef; background: #f8f9fa; border-radius: 10px;">
+            <p style="font-size: 0.9em; color: #666; line-height: 1.6;">
+                <a href="politica-privacidad.html" target="_blank" style="color: #667eea; margin: 0 15px; text-decoration: none; font-weight: 500;">
+                    📄 Política de Privacidad
+                </a>
+                <span style="color: #ccc;">•</span>
+                <a href="terms-of-service.html" target="_blank" style="color: #667eea; margin: 0 15px; text-decoration: none; font-weight: 500;">
+                    📝 Términos de Servicio
+                </a>
+                <br>
+                <span style="margin-top: 15px; display: block; color: #888;">
+                    © 2025 AliadoApp Tu aliado en las urgencias
+                </span>
+                <span style="display: block; margin-top: 5px; font-size: 0.8em; color: #999;">
+                    🤝 Tu aliado confiable en servicios y soluciones
+                </span>
+            </p>
+        </footer>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
