@@ -461,3 +461,58 @@ header h1 {
         gap: 8px;
     }
 }
+
+css
+/* ESTILOS FORMULARIO PLEGABLE */
+.register-collapsible {
+    background: #e8f6f3;
+    border-radius: 15px;
+    margin-bottom: 25px;
+    border-left: 5px solid #1abc9c;
+    overflow: hidden;
+}
+
+.collapsible-header {
+    background: linear-gradient(135deg, #1abc9c, #16a085);
+    color: white;
+    padding: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 15px 15px 0 0;
+}
+
+.collapsible-header:hover {
+    background: linear-gradient(135deg, #16a085, #149174);
+}
+
+.arrow {
+    transition: transform 0.3s ease;
+    font-size: 0.9em;
+}
+
+.register-collapsible[open] .arrow {
+    transform: rotate(180deg);
+}
+
+.register-collapsible[open] {
+    border-radius: 15px;
+}
+
+.register-section {
+    padding: 25px;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

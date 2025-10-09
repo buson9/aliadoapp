@@ -60,58 +60,64 @@
         </div>
 
         <!-- Registro trabajador -->
-        <div class="register-section">
-            <h3>💪 ¿Tienes ganas de trabajar y ayudar a las personas?</h3>
-            <p class="register-subtitle">Regístrate indicando tu departamento y zona de trabajo</p>
-            
-            <input type="text" id="regNombre" placeholder="Tu nombre completo" required>
-            
-            <select id="regTipo" required onchange="mostrarCampoOtros()">
-                <option value="">¿Qué sabes hacer?</option>
-                <option value="pintor">Pintura</option>
-                <option value="albanil">Albañilería/Construcción</option>
-                <option value="limpieza">Limpieza</option>
-                <option value="electricista">Electricidad</option>
-                <option value="plomero">Plomería</option>
-                <option value="ayudante">Ayudante General</option>
-                <option value="jardinero">Jardinería</option>
-                <option value="carpintero">Carpintería</option>
-                <option value="celular">Celulares</option>
-                <option value="cerrajero">Cerrajería</option>
-                <option value="cociner">Cocina</option>
-                <option value="mecanico">Mecánica</option>
-                <option value="soldador">Soldadura</option>
-                <option value="vendedor">Ventas</option>
-                <option value="mudanzas">Mudanzas</option>
-                <option value="estetica">Belleza</option>
-                <option value="otros">Otros (especificar)</option>
-            </select>
+       <!-- FORMULARIO PLEGABLE -->
+<details class="register-collapsible">
+    <summary class="collapsible-header">
+        <span>💪 ¿Quieres trabajar? ¡Regístrate aquí!</span>
+        <span class="arrow">▼</span>
+    </summary>
+    
+    <div class="register-section">
+        <p class="register-subtitle">Completa tus datos para aparecer en las búsquedas</p>
+        
+        <input type="text" id="regNombre" placeholder="Tu nombre completo" required>
+        
+        <select id="regTipo" required onchange="mostrarCampoOtros()">
+            <option value="">¿Qué sabes hacer?</option>
+            <option value="pintor">Pintura</option>
+            <option value="albanil">Albañilería/Construcción</option>
+            <option value="limpieza">Limpieza</option>
+            <option value="electricista">Electricidad</option>
+            <option value="plomero">Plomería</option>
+            <option value="ayudante">Ayudante General</option>
+            <option value="jardinero">Jardinería</option>
+            <option value="carpintero">Carpintería</option>
+            <option value="celular">Celulares</option>
+            <option value="cerrajero">Cerrajería</option>
+            <option value="cociner">Cocina</option>
+            <option value="mecanico">Mecánica</option>
+            <option value="soldador">Soldadura</option>
+            <option value="vendedor">Ventas</option>
+            <option value="mudanzas">Mudanzas</option>
+            <option value="estetica">Belleza</option>
+            <option value="otros">Otros (especificar)</option>
+        </select>
 
-            <!-- CAMPO NUEVO PARA HABILIDADES PERSONALIZADAS -->
-            <div id="campoOtrosContainer" style="display: none;">
-                <input type="text" id="regOtrosEspecifico" placeholder="Describe tu habilidad o servicio (ej: reparar computadoras, clases de música, etc.)" style="width: 100%;">
-            </div>
-
-            <select id="regDepartamento" required>
-                <option value="">¿Dónde trabajas?</option>
-                <option value="la paz">La Paz</option>
-                <option value="el alto">El Alto</option>
-		<option value="cochabamba">Cochabamba</option>
-                <option value="santa cruz">Santa Cruz</option>
-                <option value="oruro">Oruro</option>
-                <option value="potosi">Potosí</option>
-                <option value="chuquisaca">Chuquisaca</option>
-                <option value="tarija">Tarija</option>
-                <option value="beni">Beni</option>
-                <option value="pando">Pando</option>
-            </select>
-
-            <input type="text" id="regUbicacion" placeholder="Tu zona en la ciudad (Norte, Sur, Centro, etc.)" list="zonasGenericas" required>
-            
-            <input type="tel" id="regTelefono" placeholder="Tu teléfono (ej: +591 71234567)" required>
-            
-            <button onclick="registrarTrabajador()">🤝 ¡Quiero Ayudar y Trabajar!</button>
+        <div id="campoOtrosContainer" style="display: none;">
+            <input type="text" id="regOtrosEspecifico" placeholder="Describe tu habilidad o servicio (ej: reparar computadoras, clases de música, etc.)" style="width: 100%;">
         </div>
+
+        <select id="regDepartamento" required>
+            <option value="">¿Dónde trabajas?</option>
+            <option value="la paz">La Paz</option>
+            <option value="el alto">El Alto</option>
+            <option value="cochabamba">Cochabamba</option>
+            <option value="santa cruz">Santa Cruz</option>
+            <option value="oruro">Oruro</option>
+            <option value="potosi">Potosí</option>
+            <option value="chuquisaca">Chuquisaca</option>
+            <option value="tarija">Tarija</option>
+            <option value="beni">Beni</option>
+            <option value="pando">Pando</option>
+        </select>
+
+        <input type="text" id="regUbicacion" placeholder="Tu zona en la ciudad (Norte, Sur, Centro, etc.)" list="zonasGenericas" required>
+        
+        <input type="tel" id="regTelefono" placeholder="Tu teléfono (ej: +591 71234567)" required>
+        
+        <button onclick="registrarTrabajador()">🤝 ¡Quiero Ayudar y Trabajar!</button>
+    </div>
+</details>
 
         <!-- Resultados -->
         <div class="results-section" id="resultsSection">
