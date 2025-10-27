@@ -1,9 +1,7 @@
-name: Build Android APK
+name: Build Android AAB Firmado
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
     branches: [ main ]
 
 jobs:
@@ -25,26 +23,34 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
         
-    - name: Install dependencies
+    - name: Decodificar Keystore
+      run: |
+        echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > android/app/aliadoapp-key.keystore
+        
+    - name: Instalar dependencias
       run: |
         npm install
         npm install @capacitor/core@5 @capacitor/cli@5 @capacitor/android@5
         
-    - name: Initialize Capacitor
+    - name: Inicializar Capacitor
       run: |
         npx cap init AliadoApp com.aliadoapp --web-dir=www
         npx cap add android
         
-    - name: Build AAB
+    - name: Construir AAB Firmado
       run: |
         npx cap copy
         cd android
         chmod +x ./gradlew
-        ./gradlew bundleRelease
+        ./gradlew bundleRelease \
+          -Pandroid.injected.signing.store.file=app/aliadoapp-key.keystore \
+          -Pandroid.injected.signing.store.password='${{ secrets.KEYSTORE_PASSWORD }}' \
+          -Pandroid.injected.signing.key.alias='${{ secrets.KEY_ALIAS }}' \
+          -Pandroid.injected.signing.key.password='${{ secrets.KEY_PASSWORD }}'
         
-    - name: Upload AAB
+    - name: Subir AAB
       uses: actions/upload-artifact@v4
       with:
-        name: aliadoapp-aab
+        name: aliadoapp-aab-firmado
         path: android/app/build/outputs/bundle/release/app-release.aab
         retention-days: 30
