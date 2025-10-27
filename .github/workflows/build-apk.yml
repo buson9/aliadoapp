@@ -33,26 +33,19 @@ jobs:
         npx cap init AliadoApp com.aliadoapp --web-dir=www
         npx cap add android
         
-    - name: Crear directorio android
+    - name: Decodificar Keystore en raíz
       run: |
-        mkdir -p android/app
+        echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > aliadoapp-key.keystore
+        echo "✅ Keystore creado en raíz"
+        ls -la aliadoapp-key.keystore
         
-    - name: Decodificar Keystore
-      run: |
-        echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > android/app/aliadoapp-key.keystore
-        
-    - name: Verificar que el keystore se creó
-      run: |
-        ls -la android/app/
-        file android/app/aliadoapp-key.keystore
-        
-    - name: Construir AAB Firmado
+    - name: Construir AAB Firmado (ruta corregida)
       run: |
         npx cap copy
         cd android
         chmod +x ./gradlew
         ./gradlew bundleRelease \
-          -Pandroid.injected.signing.store.file=app/aliadoapp-key.keystore \
+          -Pandroid.injected.signing.store.file=../aliadoapp-key.keystore \
           -Pandroid.injected.signing.store.password='${{ secrets.KEYSTORE_PASSWORD }}' \
           -Pandroid.injected.signing.key.alias='${{ secrets.KEY_ALIAS }}' \
           -Pandroid.injected.signing.key.password='${{ secrets.KEY_PASSWORD }}'
