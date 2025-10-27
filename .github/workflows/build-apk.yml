@@ -23,10 +23,6 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
         
-    - name: Decodificar Keystore
-      run: |
-        echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > android/app/aliadoapp-key.keystore
-        
     - name: Instalar dependencias
       run: |
         npm install
@@ -36,6 +32,19 @@ jobs:
       run: |
         npx cap init AliadoApp com.aliadoapp --web-dir=www
         npx cap add android
+        
+    - name: Crear directorio android
+      run: |
+        mkdir -p android/app
+        
+    - name: Decodificar Keystore
+      run: |
+        echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > android/app/aliadoapp-key.keystore
+        
+    - name: Verificar que el keystore se creó
+      run: |
+        ls -la android/app/
+        file android/app/aliadoapp-key.keystore
         
     - name: Construir AAB Firmado
       run: |
