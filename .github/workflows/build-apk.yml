@@ -30,7 +30,7 @@ jobs:
         
     - name: Inicializar Capacitor
       run: |
-        npx cap init AliadoApp com.aliadoapp --web-dir=www
+        npx cap init AliadoApp com.aliadoapp.boristrabajos --web-dir=www
         npx cap add android
         
     - name: Crear y verificar keystore
