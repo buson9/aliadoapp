@@ -33,22 +33,30 @@ jobs:
         npx cap init AliadoApp com.aliadoapp --web-dir=www
         npx cap add android
         
-    - name: Decodificar Keystore en raíz
+    - name: Crear y verificar keystore
       run: |
-        echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > aliadoapp-key.keystore
-        echo "✅ Keystore creado en raíz"
-        ls -la aliadoapp-key.keystore
+        # Crear el keystore en el workspace actual
+        echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > /home/runner/work/aliadoapp/aliadoapp/aliadoapp-key.keystore
         
-    - name: Construir AAB Firmado (ruta corregida)
+        # Verificar que se creó correctamente
+        echo "🔍 Verificando keystore:"
+        pwd
+        ls -la /home/runner/work/aliadoapp/aliadoapp/aliadoapp-key.keystore
+        echo "📊 Tamaño del archivo:"
+        du -h /home/runner/work/aliadoapp/aliadoapp/aliadoapp-key.keystore
+        
+    - name: Construir AAB Firmado
       run: |
         npx cap copy
         cd android
-        chmod +x ./gradlew
+        
+        # Usar ruta absoluta explícita
+        ./gradlew clean
         ./gradlew bundleRelease \
-          -Pandroid.injected.signing.store.file=../aliadoapp-key.keystore \
-          -Pandroid.injected.signing.store.password='${{ secrets.KEYSTORE_PASSWORD }}' \
-          -Pandroid.injected.signing.key.alias='${{ secrets.KEY_ALIAS }}' \
-          -Pandroid.injected.signing.key.password='${{ secrets.KEY_PASSWORD }}'
+          -Pandroid.injected.signing.store.file="/home/runner/work/aliadoapp/aliadoapp/aliadoapp-key.keystore" \
+          -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
+          -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
+          -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
         
     - name: Subir AAB
       uses: actions/upload-artifact@v4
