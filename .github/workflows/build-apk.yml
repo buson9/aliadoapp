@@ -1,4 +1,4 @@
-name: Build Android AAB Firmado
+name: Build Android AAB
 
 on:
   push:
@@ -23,43 +23,39 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
         
-    - name: Instalar dependencias
+    - name: Install dependencies
       run: |
         npm install
         npm install @capacitor/core@5 @capacitor/cli@5 @capacitor/android@5
         
-    - name: Inicializar Capacitor
+    - name: Initialize Capacitor
       run: |
         npx cap init AliadoApp com.aliadoapp.boristrabajos --web-dir=www
         npx cap add android
-
-    # Agrega este nuevo paso
-    - name: Configurar targetSdkVersion a 35
+        
+    - name: Configure Android SDK
       run: |
         cd android
-        sed -i 's/targetSdkVersion 33/targetSdkVersion 35/g' app/build.gradle
-        echo "✅ targetSdkVersion actualizado a 35"
-        # (Opcional) Verifica el cambio
-        grep "targetSdkVersion" app/build.gradle
+        # FORZAR el targetSdkVersion a 35
+        sed -i 's/targetSdkVersion.*/targetSdkVersion 35/g' app/build.gradle
+        sed -i 's/compileSdkVersion.*/compileSdkVersion 35/g' app/build.gradle
+        echo "✅ SDK versions updated to 35"
         
-    - name: Crear y verificar keystore
+    - name: Create keystore
       run: |
-        # Crear el keystore en el workspace actual
         echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > /home/runner/work/aliadoapp/aliadoapp/aliadoapp-key.keystore
-        
-        # Verificar que se creó correctamente
-        echo "🔍 Verificando keystore:"
-        pwd
+        echo "🔍 Keystore created:"
         ls -la /home/runner/work/aliadoapp/aliadoapp/aliadoapp-key.keystore
-        echo "📊 Tamaño del archivo:"
-        du -h /home/runner/work/aliadoapp/aliadoapp/aliadoapp-key.keystore
         
-    - name: Construir AAB Firmado
+    - name: Build AAB
       run: |
         npx cap copy
         cd android
         
-        # Usar ruta absoluta explícita
+        # Verificar que los cambios se aplicaron
+        echo "🔍 Verifying build.gradle:"
+        grep -E "(targetSdkVersion|compileSdkVersion)" app/build.gradle
+        
         ./gradlew clean
         ./gradlew bundleRelease \
           -Pandroid.injected.signing.store.file="/home/runner/work/aliadoapp/aliadoapp/aliadoapp-key.keystore" \
@@ -67,9 +63,11 @@ jobs:
           -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
           -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
         
-    - name: Subir AAB
+    - name: Upload AAB and mapping
       uses: actions/upload-artifact@v4
       with:
-        name: aliadoapp-aab-firmado
-        path: android/app/build/outputs/bundle/release/app-release.aab
+        name: aliadoapp-aab
+        path: |
+          android/app/build/outputs/bundle/release/app-release.aab
+          android/app/build/outputs/mapping/release/mapping.txt
         retention-days: 30
