@@ -24,12 +24,12 @@ jobs:
         java-version: '17'
 
     - name: Setup Android SDK
-      uses: android-actions/setup-android@v3  # Action especializada para Android
-
-    - name: Install Android SDK 35
-      run: |
-        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
-        echo "✅ Android SDK 35 instalado"
+      uses: android-actions/setup-android@v3
+      with:
+        api-level: 35
+        build-tools-version: 35.0.0
+        ndk-version: 25.2.9519653
+        cmake-version: 3.22.1
         
     - name: Install dependencies
       run: |
@@ -47,29 +47,45 @@ jobs:
         # Asegurar que usa API 35
         sed -i 's/targetSdkVersion.*/targetSdkVersion 35/g' app/build.gradle
         sed -i 's/compileSdkVersion.*/compileSdkVersion 35/g' app/build.gradle
+        
+        # También actualizar el build.gradle principal si existe
+        if [ -f build.gradle ]; then
+          sed -i 's/compileSdkVersion.*/compileSdkVersion 35/g' build.gradle
+        fi
+        
         echo "✅ SDK versions updated to 35"
-        # Verificar el cambio
+        echo "🔍 Verificación:"
         grep -E "(targetSdkVersion|compileSdkVersion)" app/build.gradle
         
     - name: Create keystore
       run: |
         echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > /home/runner/work/aliadoapp/aliadoapp/aliadoapp-key.keystore
-        echo "🔍 Keystore created"
+        echo "🔍 Keystore created - Verifying:"
+        ls -la /home/runner/work/aliadoapp/aliadoapp/aliadoapp-key.keystore
+        file /home/runner/work/aliadoapp/aliadoapp/aliadoapp-key.keystore
         
     - name: Build AAB
       run: |
         npx cap copy
         cd android
+        
+        # Verificar entorno Android
+        echo "🔍 Android Environment:"
+        echo "ANDROID_HOME: $ANDROID_HOME"
+        echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
+        ls -la $ANDROID_HOME/platforms/
+        
         ./gradlew clean
         ./gradlew bundleRelease \
           -Pandroid.injected.signing.store.file="/home/runner/work/aliadoapp/aliadoapp/aliadoapp-key.keystore" \
           -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
           -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
-          -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
+          -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}" \
+          --stacktrace
         
     - name: Upload AAB
       uses: actions/upload-artifact@v4
       with:
         name: aliadoapp-aab
         path: android/app/build/outputs/bundle/release/app-release.aab
-        retention-days: 300
+        retention-days: 30
