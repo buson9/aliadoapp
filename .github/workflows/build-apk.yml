@@ -17,9 +17,20 @@ jobs:
       with:
         node-version: '18'
         
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
     - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
-      
+      uses: android-actions/setup-android@v3  # Action especializada para Android
+
+    - name: Install Android SDK 35
+      run: |
+        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
+        echo "✅ Android SDK 35 instalado"
+        
     - name: Install dependencies
       run: |
         npm install
@@ -30,14 +41,15 @@ jobs:
         npx cap init AliadoApp com.aliadoapp.boristrabajos --web-dir=www
         npx cap add android
         
-    - name: Configure Android SDK to 34
+    - name: Configure Android SDK to 35
       run: |
         cd android
-        # Usar API 34 que es más estable
-        sed -i 's/targetSdkVersion.*/targetSdkVersion 34/g' app/build.gradle
-        sed -i 's/compileSdkVersion.*/compileSdkVersion 34/g' app/build.gradle
-        sed -i 's/compileSdkVersion.*/compileSdkVersion 34/g' build.gradle
-        echo "✅ SDK versions updated to 34"
+        # Asegurar que usa API 35
+        sed -i 's/targetSdkVersion.*/targetSdkVersion 35/g' app/build.gradle
+        sed -i 's/compileSdkVersion.*/compileSdkVersion 35/g' app/build.gradle
+        echo "✅ SDK versions updated to 35"
+        # Verificar el cambio
+        grep -E "(targetSdkVersion|compileSdkVersion)" app/build.gradle
         
     - name: Create keystore
       run: |
@@ -48,11 +60,6 @@ jobs:
       run: |
         npx cap copy
         cd android
-        
-        # Verificar configuración
-        echo "🔍 Build configuration:"
-        grep -E "(targetSdkVersion|compileSdkVersion)" app/build.gradle
-        
         ./gradlew clean
         ./gradlew bundleRelease \
           -Pandroid.injected.signing.store.file="/home/runner/work/aliadoapp/aliadoapp/aliadoapp-key.keystore" \
@@ -65,4 +72,4 @@ jobs:
       with:
         name: aliadoapp-aab
         path: android/app/build/outputs/bundle/release/app-release.aab
-        retention-days: 30
+        retention-days: 300
