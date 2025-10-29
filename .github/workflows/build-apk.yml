@@ -1,4 +1,4 @@
-name: Build Android AAB with Firebase
+name: Build Android AAB
 
 on:
   push:
@@ -23,22 +23,29 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Setup Android SDK 35 CORREGIDO
+    - name: Clean Android Environment
       run: |
-        # Limpiar variables de entorno conflictivas
+        # ELIMINAR completamente cualquier rastro de SDK previo
+        export ANDROID_SDK_ROOT=""
+        export ANDROID_HOME=""
         echo "ANDROID_SDK_ROOT=" >> $GITHUB_ENV
-        echo "ANDROID_HOME=$GITHUB_WORKSPACE/android-sdk" >> $GITHUB_ENV
+        echo "ANDROID_HOME=$GITHUB_WORKSPACE/android-sdk-custom" >> $GITHUB_ENV
         
-        # Instalar SDK 35 desde cero
+    - name: Install Android SDK 35 Clean
+      run: |
+        # Instalar SDK completamente nuevo
         wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
         unzip -q commandlinetools-linux-9477386_latest.zip
-        mkdir -p android-sdk/cmdline-tools/latest
-        mv cmdline-tools/* android-sdk/cmdline-tools/latest/
+        mkdir -p android-sdk-custom/cmdline-tools/latest
+        mv cmdline-tools/* android-sdk-custom/cmdline-tools/latest/
         
-        # Aceptar licencias y instalar
-        yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-35" "build-tools;35.0.0" --sdk_root=$GITHUB_WORKSPACE/android-sdk
+        # Configurar PATH
+        echo "$GITHUB_WORKSPACE/android-sdk-custom/cmdline-tools/latest/bin" >> $GITHUB_PATH
         
-        echo "✅ SDK 35 instalado correctamente"
+        # Aceptar licencias e instalar
+        yes | sdkmanager --install "platforms;android-35" "build-tools;35.0.0" --sdk_root=$GITHUB_WORKSPACE/android-sdk-custom
+        
+        echo "✅ SDK 35 instalado en ubicación limpia"
         
     - name: Install dependencies
       run: |
@@ -54,18 +61,20 @@ jobs:
       run: |
         echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > aliadoapp-key.keystore
         
-    - name: Build AAB
+    - name: Build AAB with Clean Environment
       run: |
+        # Verificar entorno ANTES de construir
+        echo "🔍 ENTORNO FINAL:"
+        echo "ANDROID_HOME: $ANDROID_HOME"
+        echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
+        echo "PATH: $PATH"
+        
         npx cap copy
         cd android
         
-        # Verificar que usa ANDROID_HOME correcto
-        echo "🔍 Verificando entorno Android:"
-        echo "ANDROID_HOME: $ANDROID_HOME"
-        echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
-        
-        ./gradlew clean
-        ./gradlew bundleRelease \
+        # Forzar variables en el proceso de Gradle
+        ANDROID_HOME="$GITHUB_WORKSPACE/android-sdk-custom" ANDROID_SDK_ROOT="" ./gradlew clean
+        ANDROID_HOME="$GITHUB_WORKSPACE/android-sdk-custom" ANDROID_SDK_ROOT="" ./gradlew bundleRelease \
           -Pandroid.injected.signing.store.file="../aliadoapp-key.keystore" \
           -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
           -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
