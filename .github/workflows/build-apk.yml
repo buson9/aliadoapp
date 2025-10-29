@@ -32,23 +32,28 @@ jobs:
         npm install
         npm install @capacitor/core@5 @capacitor/cli@5 @capacitor/android@5
         
-    - name: Initialize Capacitor and Configure SDK
+    - name: Initialize Capacitor
       run: |
         npx cap init AliadoApp com.aliadoapp.boristrabajos --web-dir=www
         npx cap add android
         
-        # CONFIGURAR SDK 35 después de crear la plataforma
+    - name: Configure Android SDK to 35 CORREGIDO
+      run: |
         cd android
+        
+        # SOLO modificar app/build.gradle - NO variables.gradle
+        echo "🔍 Archivos .gradle encontrados:"
+        find . -name "*.gradle" -type f
+        
+        echo "📝 Modificando solo app/build.gradle..."
         sed -i 's/targetSdkVersion.*/targetSdkVersion 35/g' app/build.gradle
         sed -i 's/compileSdkVersion.*/compileSdkVersion 35/g' app/build.gradle
         
-        # También verificar variables.gradle si existe
-        if [ -f variables.gradle ]; then
-          sed -i 's/targetSdkVersion.*/targetSdkVersion 35/g' variables.gradle
-          sed -i 's/compileSdkVersion.*/compileSdkVersion 35/g' variables.gradle
-        fi
+        # NO modificar variables.gradle - puede causar errores
+        echo "✅ Solo app/build.gradle modificado"
         
-        echo "✅ Android SDK configurado a 35"
+        echo "🔍 Verificación de cambios:"
+        grep -E "(targetSdkVersion|compileSdkVersion)" app/build.gradle
         
     - name: Create keystore
       run: |
@@ -58,14 +63,6 @@ jobs:
       run: |
         npx cap copy
         cd android
-        
-        # Verificar la configuración final
-        echo "🔍 Configuración final del build:"
-        grep -E "(targetSdk|compileSdk)" app/build.gradle || echo "No se encontró en app/build.gradle"
-        if [ -f variables.gradle ]; then
-          grep -E "(targetSdk|compileSdk)" variables.gradle || echo "No se encontró en variables.gradle"
-        fi
-        
         ./gradlew clean
         ./gradlew bundleRelease \
           -Pandroid.injected.signing.store.file="../aliadoapp-key.keystore" \
