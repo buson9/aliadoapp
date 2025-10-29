@@ -23,16 +23,22 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Setup Android SDK 35 FIXED
+    - name: Setup Android SDK 35 CORREGIDO
       run: |
+        # Limpiar variables de entorno conflictivas
+        echo "ANDROID_SDK_ROOT=" >> $GITHUB_ENV
+        echo "ANDROID_HOME=$GITHUB_WORKSPACE/android-sdk" >> $GITHUB_ENV
+        
         # Instalar SDK 35 desde cero
-        wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-        unzip commandlinetools-linux-9477386_latest.zip
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+        unzip -q commandlinetools-linux-9477386_latest.zip
         mkdir -p android-sdk/cmdline-tools/latest
         mv cmdline-tools/* android-sdk/cmdline-tools/latest/
-        export ANDROID_HOME=$PWD/android-sdk
-        echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
-        android-sdk/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-35" "build-tools;35.0.0" --sdk_root=$ANDROID_HOME
+        
+        # Aceptar licencias y instalar
+        yes | android-sdk/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-35" "build-tools;35.0.0" --sdk_root=$GITHUB_WORKSPACE/android-sdk
+        
+        echo "✅ SDK 35 instalado correctamente"
         
     - name: Install dependencies
       run: |
@@ -52,6 +58,12 @@ jobs:
       run: |
         npx cap copy
         cd android
+        
+        # Verificar que usa ANDROID_HOME correcto
+        echo "🔍 Verificando entorno Android:"
+        echo "ANDROID_HOME: $ANDROID_HOME"
+        echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
+        
         ./gradlew clean
         ./gradlew bundleRelease \
           -Pandroid.injected.signing.store.file="../aliadoapp-key.keystore" \
@@ -64,11 +76,3 @@ jobs:
       with:
         name: aliadoapp-aab
         path: android/app/build/outputs/bundle/release/app-release.aab
-
-    - name: Deploy to Firebase
-      uses: FirebaseExtended/action-hosting-deploy@v0
-      with:
-        repoToken: '${{ secrets.GITHUB_TOKEN }}'
-        firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
-        channelId: live
-        projectId: tu-project-id-firebase
