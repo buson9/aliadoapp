@@ -1,4 +1,4 @@
-name: Build Android AAB
+name: Build Android AAB with API 35
 
 on:
   push:
@@ -25,56 +25,49 @@ jobs:
 
     - name: Clean Android Environment
       run: |
-        # ELIMINAR completamente cualquier rastro de SDK previo
-        export ANDROID_SDK_ROOT=""
-        export ANDROID_HOME=""
         echo "ANDROID_SDK_ROOT=" >> $GITHUB_ENV
-        echo "ANDROID_HOME=$GITHUB_WORKSPACE/android-sdk-custom" >> $GITHUB_ENV
-        
-    - name: Install Android SDK 35 Clean
-      run: |
-        # Instalar SDK completamente nuevo
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-        unzip -q commandlinetools-linux-9477386_latest.zip
-        mkdir -p android-sdk-custom/cmdline-tools/latest
-        mv cmdline-tools/* android-sdk-custom/cmdline-tools/latest/
-        
-        # Configurar PATH
-        echo "$GITHUB_WORKSPACE/android-sdk-custom/cmdline-tools/latest/bin" >> $GITHUB_PATH
-        
-        # Aceptar licencias e instalar
-        yes | sdkmanager --install "platforms;android-35" "build-tools;35.0.0" --sdk_root=$GITHUB_WORKSPACE/android-sdk-custom
-        
-        echo "✅ SDK 35 instalado en ubicación limpia"
         
     - name: Install dependencies
       run: |
         npm install
         npm install @capacitor/core@5 @capacitor/cli@5 @capacitor/android@5
         
-    - name: Initialize Capacitor
+    - name: Initialize Capacitor and Configure SDK
       run: |
         npx cap init AliadoApp com.aliadoapp.boristrabajos --web-dir=www
         npx cap add android
+        
+        # CONFIGURAR SDK 35 después de crear la plataforma
+        cd android
+        sed -i 's/targetSdkVersion.*/targetSdkVersion 35/g' app/build.gradle
+        sed -i 's/compileSdkVersion.*/compileSdkVersion 35/g' app/build.gradle
+        
+        # También verificar variables.gradle si existe
+        if [ -f variables.gradle ]; then
+          sed -i 's/targetSdkVersion.*/targetSdkVersion 35/g' variables.gradle
+          sed -i 's/compileSdkVersion.*/compileSdkVersion 35/g' variables.gradle
+        fi
+        
+        echo "✅ Android SDK configurado a 35"
         
     - name: Create keystore
       run: |
         echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > aliadoapp-key.keystore
         
-    - name: Build AAB with Clean Environment
+    - name: Build AAB
       run: |
-        # Verificar entorno ANTES de construir
-        echo "🔍 ENTORNO FINAL:"
-        echo "ANDROID_HOME: $ANDROID_HOME"
-        echo "ANDROID_SDK_ROOT: $ANDROID_SDK_ROOT"
-        echo "PATH: $PATH"
-        
         npx cap copy
         cd android
         
-        # Forzar variables en el proceso de Gradle
-        ANDROID_HOME="$GITHUB_WORKSPACE/android-sdk-custom" ANDROID_SDK_ROOT="" ./gradlew clean
-        ANDROID_HOME="$GITHUB_WORKSPACE/android-sdk-custom" ANDROID_SDK_ROOT="" ./gradlew bundleRelease \
+        # Verificar la configuración final
+        echo "🔍 Configuración final del build:"
+        grep -E "(targetSdk|compileSdk)" app/build.gradle || echo "No se encontró en app/build.gradle"
+        if [ -f variables.gradle ]; then
+          grep -E "(targetSdk|compileSdk)" variables.gradle || echo "No se encontró en variables.gradle"
+        fi
+        
+        ./gradlew clean
+        ./gradlew bundleRelease \
           -Pandroid.injected.signing.store.file="../aliadoapp-key.keystore" \
           -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
           -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
