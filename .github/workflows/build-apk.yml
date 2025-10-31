@@ -44,15 +44,15 @@ jobs:
       run: |
         echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > aliadoapp-key.keystore
         
-    - name: Build AAB Nuclear Option
+    - name: Build AAB Nuclear Solution
       run: |
         npx cap copy
         cd android
         
-        # ELIMINAR cualquier rastro de la carpeta android que crea el conflicto
-        rm -rf /home/runner/work/aliadoapp/aliadoapp/android
+        # SOLUCIÓN NUCLEAR - Limpiar entorno completamente
+        unset ANDROID_SDK_ROOT
+        export ANDROID_SDK_ROOT=""
         
-        # Construir usando solo el SDK del sistema
         ./gradlew clean
         ANDROID_SDK_ROOT="" ./gradlew bundleRelease \
           -Pandroid.injected.signing.store.file="../aliadoapp-key.keystore" \
