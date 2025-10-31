@@ -25,6 +25,7 @@ jobs:
 
     - name: Clean Android Environment
       run: |
+        # ELIMINAR COMPLETAMENTE la variable conflictiva
         echo "ANDROID_SDK_ROOT=" >> $GITHUB_ENV
         
     - name: Install dependencies
@@ -37,34 +38,25 @@ jobs:
         npx cap init AliadoApp com.aliadoapp.boristrabajos --web-dir=www
         npx cap add android
         
-    - name: Configure Android SDK to 35 CORREGIDO
+    - name: Configure Android SDK to 35
       run: |
         cd android
-        
-        # SOLO modificar app/build.gradle - NO variables.gradle
-        echo "🔍 Archivos .gradle encontrados:"
-        find . -name "*.gradle" -type f
-        
-        echo "📝 Modificando solo app/build.gradle..."
         sed -i 's/targetSdkVersion.*/targetSdkVersion 35/g' app/build.gradle
         sed -i 's/compileSdkVersion.*/compileSdkVersion 35/g' app/build.gradle
-        
-        # NO modificar variables.gradle - puede causar errores
-        echo "✅ Solo app/build.gradle modificado"
-        
-        echo "🔍 Verificación de cambios:"
-        grep -E "(targetSdkVersion|compileSdkVersion)" app/build.gradle
+        echo "✅ SDK configurado a 35"
         
     - name: Create keystore
       run: |
         echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > aliadoapp-key.keystore
         
-    - name: Build AAB
+    - name: Build AAB with Clean Environment
       run: |
+        # Forzar entorno limpio DURANTE la construcción
+        export ANDROID_SDK_ROOT=""
         npx cap copy
         cd android
-        ./gradlew clean
-        ./gradlew bundleRelease \
+        ANDROID_SDK_ROOT="" ./gradlew clean
+        ANDROID_SDK_ROOT="" ./gradlew bundleRelease \
           -Pandroid.injected.signing.store.file="../aliadoapp-key.keystore" \
           -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
           -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
@@ -75,3 +67,4 @@ jobs:
       with:
         name: aliadoapp-aab
         path: android/app/build/outputs/bundle/release/app-release.aab
+        retention-days: 30
