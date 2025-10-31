@@ -23,11 +23,6 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Clean Android Environment
-      run: |
-        # ELIMINAR COMPLETAMENTE la variable conflictiva
-        echo "ANDROID_SDK_ROOT=" >> $GITHUB_ENV
-        
     - name: Install dependencies
       run: |
         npm install
@@ -49,18 +44,24 @@ jobs:
       run: |
         echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > aliadoapp-key.keystore
         
-    - name: Build AAB with Clean Environment
+    - name: Build AAB with SDK Fix
       run: |
-        # Forzar entorno limpio DURANTE la construcción
-        export ANDROID_SDK_ROOT=""
         npx cap copy
         cd android
-        ANDROID_SDK_ROOT="" ./gradlew clean
-        ANDROID_SDK_ROOT="" ./gradlew bundleRelease \
+        
+        # SOLUCIÓN DEFINITIVA: Usar el SDK del sistema y deshabilitar completamente ANDROID_SDK_ROOT
+        unset ANDROID_SDK_ROOT
+        export ANDROID_SDK_ROOT=""
+        
+        # Forzar el uso exclusivo de ANDROID_HOME
+        ./gradlew clean
+        ./gradlew bundleRelease \
           -Pandroid.injected.signing.store.file="../aliadoapp-key.keystore" \
           -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
           -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
-          -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}"
+          -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}" \
+          -Dandroid.sdk.root="" \
+          -Dandroid.home=$ANDROID_HOME
         
     - name: Upload AAB
       uses: actions/upload-artifact@v4
