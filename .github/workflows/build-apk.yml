@@ -44,24 +44,22 @@ jobs:
       run: |
         echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > aliadoapp-key.keystore
         
-    - name: Build AAB with SDK Fix
+    - name: Build AAB Nuclear Option
       run: |
         npx cap copy
         cd android
         
-        # SOLUCIÓN DEFINITIVA: Usar el SDK del sistema y deshabilitar completamente ANDROID_SDK_ROOT
-        unset ANDROID_SDK_ROOT
-        export ANDROID_SDK_ROOT=""
+        # ELIMINAR cualquier rastro de la carpeta android que crea el conflicto
+        rm -rf /home/runner/work/aliadoapp/aliadoapp/android
         
-        # Forzar el uso exclusivo de ANDROID_HOME
+        # Construir usando solo el SDK del sistema
         ./gradlew clean
-        ./gradlew bundleRelease \
+        ANDROID_SDK_ROOT="" ./gradlew bundleRelease \
           -Pandroid.injected.signing.store.file="../aliadoapp-key.keystore" \
           -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
           -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
           -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}" \
-          -Dandroid.sdk.root="" \
-          -Dandroid.home=$ANDROID_HOME
+          --no-daemon
         
     - name: Upload AAB
       uses: actions/upload-artifact@v4
