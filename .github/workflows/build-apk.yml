@@ -23,26 +23,15 @@ jobs:
         distribution: temurin
         java-version: 17
 
-    ###########################################################
-    # 🔧 Fix: eliminar ANDROID_HOME para evitar conflicto
-    ###########################################################
-    - name: Fix Android SDK env vars
-      run: |
-        sudo rm -rf "$ANDROID_HOME" || true
-        echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-
-    ###########################################################
-    # 📌 SDK OFICIAL usando paquetes correctos
-    ###########################################################
+    ######################################################
+    # ⭐ USAR LA ACCIÓN QUE SÍ FUNCIONA (v2)
+    ######################################################
     - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
+      uses: android-actions/setup-android@v2
       with:
-        accept-android-sdk-licenses: true
-        packages: |
-          platforms;android-35
-          build-tools;35.0.0
-          platform-tools
-          cmdline-tools;latest
+        api-level: 35
+        build-tools: 35.0.0
+        components: platform-tools
 
     - name: Install dependencies
       run: |
@@ -55,15 +44,15 @@ jobs:
         npx cap add android
 
     ############################################################
-    # 📌 Modificar Gradle para usar API 35
+    # Ajustar Gradle al SDK 35
     ############################################################
     - name: Modify Gradle to use SDK 35
       run: |
-        sed -i 's/compileSdkVersion = [0-9]\+/compileSdkVersion = 35/' android/build.gradle
-        sed -i 's/targetSdkVersion = [0-9]\+/targetSdkVersion = 35/' android/build.gradle
+        sed -i 's/compileSdkVersion = .*/compileSdkVersion = 35/' android/build.gradle
+        sed -i 's/targetSdkVersion = .*/targetSdkVersion = 35/' android/build.gradle
 
     ############################################################
-    # 📌 Compilar AAB
+    # Compilar AAB
     ############################################################
     - name: Build AAB
       run: |
@@ -72,7 +61,7 @@ jobs:
         ./gradlew bundleRelease --no-daemon
 
     ############################################################
-    # 📌 Subir AAB resultante
+    # Subir artefacto
     ############################################################
     - name: Upload AAB
       uses: actions/upload-artifact@v4
