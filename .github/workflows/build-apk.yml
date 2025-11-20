@@ -23,6 +23,24 @@ jobs:
         distribution: temurin
         java-version: 17
 
+    ###########################################################
+    # 🔧 FIX: eliminar ANDROID_HOME viejo para evitar conflicto
+    ###########################################################
+    - name: Fix Android SDK env vars
+      run: |
+        sudo rm -rf $ANDROID_HOME || true
+        echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+
+    ###########################################################
+    # 📌 SDK OFICIAL - sin instalación manual
+    ###########################################################
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      with:
+        api-level: 35
+        build-tools: 35.0.0
+        accept-android-sdk-licenses: true
+
     - name: Install dependencies
       run: |
         npm install
@@ -33,38 +51,26 @@ jobs:
         npx cap init AliadoApp com.aliadoapp.boristrabajos --web-dir=www
         npx cap add android
 
+    ###########################################################
+    # 📌 Cambiar SDK 35 en el build.gradle generado
+    ###########################################################
     - name: Modify Gradle to use SDK 35
       run: |
         sed -i 's/compileSdkVersion = [0-9]\+/compileSdkVersion = 35/' android/build.gradle
         sed -i 's/targetSdkVersion = [0-9]\+/targetSdkVersion = 35/' android/build.gradle
-        echo "SDK actualizado a treinta y cinco correctamente"
 
-    - name: Install Android SDK 35 manually
-      run: |
-        sudo mkdir -p /usr/local/android-sdk
-        sudo chown $USER:$USER /usr/local/android-sdk
-
-        wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdtools.zip
-        unzip cmdtools.zip -d /usr/local/android-sdk/
-        mkdir -p /usr/local/android-sdk/cmdline-tools/latest
-        mv /usr/local/android-sdk/cmdline-tools/* /usr/local/android-sdk/cmdline-tools/latest || true
-
-        export ANDROID_HOME=/usr/local/android-sdk
-        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
-
-        yes | sdkmanager --licenses
-        sdkmanager "platforms;android-35" "build-tools;35.0.0"
-
+    ###########################################################
+    # 📌 COMPILAR AAB USANDO EL SDK YA CONFIGURADO
+    ###########################################################
     - name: Build AAB
       run: |
-        export ANDROID_HOME=/usr/local/android-sdk
-        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
-
         npx cap copy
         cd android
-
         ./gradlew bundleRelease --no-daemon
 
+    ###########################################################
+    # 📌 Subir AAB generado
+    ###########################################################
     - name: Upload AAB
       uses: actions/upload-artifact@v4
       with:
